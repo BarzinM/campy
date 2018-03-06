@@ -3,6 +3,8 @@ import cv2
 import threading
 from time import sleep
 import errno
+import struct
+
 
 class Camera(object):
 
@@ -39,8 +41,6 @@ class Camera(object):
         self.height = height
 
     def _receive(self, connection):
-        import struct
-        # import cPickle as pickle
         import pickle
         data_size = struct.calcsize(">L")
         offset = 2 + 2 * data_size  # 'sp' + data_size
@@ -53,12 +53,17 @@ class Camera(object):
                 data += connection.recv(4096)
 
             for i in range(len(data) - offset):
-                if data[i] == 's' and data[i + 1] == 'p':
+                if data[i:i + 1] == b's' and data[i + 1:i + 2] == b'p':
                     pointer = i + 2
                     break
+                else:
+                    print("bad start",pointer)
+                    print(data)
+                    raise ValueError("Bad Start")
             if pointer < 0:
                 data = data[-offset:] + connection.recv(4096)
                 print('looking again', len(data))
+                raise
                 continue
 
             message_size = struct.unpack(
@@ -77,12 +82,12 @@ class Camera(object):
             frame_data = data[pointer:pointer + message_size]
             pointer += message_size
 
-            if data[pointer:pointer + 2] != "ep":
-                print("bad end")
-                data = data[pointer:]
-                continue
+            # if data[pointer:pointer + 2] != b"ep":
+            #     print("bad end", data[pointer:pointer + 2])
+            #     data = data[pointer:]
+            #     continue
 
-            data = data[pointer + 2:]
+            data = data[pointer:]
 
             frame = pickle.loads(frame_data)
             with self.frame_lock:
@@ -97,8 +102,6 @@ class Camera(object):
             sleep(.01)
 
     def _send(self, connection):
-        import struct
-        # import cPickle as pickle
         import pickle
         from socket import error as serr
 
@@ -108,13 +111,12 @@ class Camera(object):
                 ret, frame = cap.read()
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 data = pickle.dumps(frame)
+                data_length = struct.pack(">L", len(data))
 
-                connection.sendall("sp")
-                connection.sendall(struct.pack(">L", len(data)))
-                connection.sendall(struct.pack(">L", len(data)))
+                connection.sendall(b"sp" + data_length + data_length)
                 for i in range(0, len(data), 4096):
                     connection.sendall(data[i:i + 4096])
-                connection.sendall("ep")
+                # connection.sendall(b"ep")
 
         except serr as e:
             e = e[0]
@@ -225,8 +227,7 @@ def monitor(device_number=0):
 
 def streamSend(ip, port, device_number=0):
     import socket
-    import cPickle as pickle
-    import struct
+    import cPickle as pickl
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -261,8 +262,7 @@ def streamSend(ip, port, device_number=0):
 
 
 def streamToFile(ip, port, directory, data_count):
-    import socket
-    import struct
+    import socke
     import cPickle as pickle
     import numpy as np
     import glob
@@ -356,8 +356,7 @@ def streamToFile(ip, port, directory, data_count):
 
 
 def streamRecieve(ip, port):
-    import socket
-    import struct
+    import socke
     import cPickle as pickle
 
     connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -420,8 +419,7 @@ def streamRecieve(ip, port):
 
 def streamSendNewImages(ip, port, device_number=0):
     import socket
-    import cPickle as pickle
-    import struct
+    import cPickle as pickl
 
     cap = cv2.VideoCapture(device_number)
     cap.set(3, 160)
