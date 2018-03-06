@@ -4,7 +4,6 @@ import threading
 from time import sleep
 import errno
 
-
 class Camera(object):
 
     def __init__(self, device_number=0):
@@ -41,7 +40,8 @@ class Camera(object):
 
     def _receive(self, connection):
         import struct
-        import cPickle as pickle
+        # import cPickle as pickle
+        import pickle
         data_size = struct.calcsize(">L")
         offset = 2 + 2 * data_size  # 'sp' + data_size
 
@@ -98,7 +98,8 @@ class Camera(object):
 
     def _send(self, connection):
         import struct
-        import cPickle as pickle
+        # import cPickle as pickle
+        import pickle
         from socket import error as serr
 
         cap = self.setup()
