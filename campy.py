@@ -4,6 +4,9 @@ import threading
 from time import sleep
 import errno
 import struct
+import pickle
+import socket
+from socket import error as serr
 
 
 class Camera(object):
@@ -41,7 +44,6 @@ class Camera(object):
         self.height = height
 
     def _receive(self, connection):
-        import pickle
         data_size = struct.calcsize(">L")
         offset = 2 + 2 * data_size  # 'sp' + data_size
 
@@ -57,7 +59,7 @@ class Camera(object):
                     pointer = i + 2
                     break
                 else:
-                    print("bad start",pointer)
+                    print("bad start", pointer)
                     print(data)
                     raise ValueError("Bad Start")
             if pointer < 0:
@@ -102,9 +104,6 @@ class Camera(object):
             sleep(.01)
 
     def _send(self, connection):
-        import pickle
-        from socket import error as serr
-
         cap = self.setup()
         try:
             while self.running:
@@ -226,9 +225,6 @@ def monitor(device_number=0):
 
 
 def streamSend(ip, port, device_number=0):
-    import socket
-    import cPickle as pickl
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((ip, port))
@@ -262,8 +258,6 @@ def streamSend(ip, port, device_number=0):
 
 
 def streamToFile(ip, port, directory, data_count):
-    import socke
-    import cPickle as pickle
     import numpy as np
     import glob
     import os
@@ -356,9 +350,6 @@ def streamToFile(ip, port, directory, data_count):
 
 
 def streamRecieve(ip, port):
-    import socke
-    import cPickle as pickle
-
     connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     connection.settimeout(100)
@@ -418,9 +409,6 @@ def streamRecieve(ip, port):
 
 
 def streamSendNewImages(ip, port, device_number=0):
-    import socket
-    import cPickle as pickl
-
     cap = cv2.VideoCapture(device_number)
     cap.set(3, 160)
     cap.set(4, 120)
