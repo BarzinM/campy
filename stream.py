@@ -69,6 +69,7 @@ class Stream(Camera):
             frame = pickle.loads(frame_data)
             with self.frame_lock:
                 self.frame = frame
+            self.new_frame = True
 
     def _send(self, cap, connection):
         try:
@@ -179,6 +180,7 @@ class StreamUDP(Camera):
             frame = pickle.loads(frame_data)
             with self.frame_lock:
                 self.frame = frame
+            self.new_frame = True
 
     def _send(self, cap, connection, address):
         try:

@@ -1,7 +1,6 @@
 import cv2
 import threading
 from time import sleep
-from socket import error as serr
 
 
 class Camera(object):
@@ -14,6 +13,7 @@ class Camera(object):
         self.frame = None
         self.frame_lock = threading.Lock()
         self.running = True
+        self.new_frame = False
         self.threads = []
 
     def setup(self, device_number=None):
@@ -40,14 +40,14 @@ class Camera(object):
 
     def _capture(self):
         cap = self.cap
-        running = self.running
-        while running:
-            running, frame = cap.read()
+        while self.running:
+            got_data, frame = cap.read()
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
             with self.frame_lock:
                 self.frame = gray
+            self.new_frame = True
         sleep(.01)
         cap.release()
 
@@ -95,7 +95,11 @@ class Camera(object):
                 raise
             cv2.waitKey(1)
 
-    def getFrame(self):
+    def getFrame(self, blocking=True):
+        if blocking:
+            while not self.new_frame:
+                pass
+            self.new_frame = False
         with self.frame_lock:
             return self.frame
 
@@ -363,6 +367,15 @@ class Camera(object):
 
 
 if __name__ == "__main__":
+    from time import time
     cam = Camera()
+    # cam.setSize(1080,720)
     cam.capture(0)
     cam.display()
+
+    # print("capture started")
+    # start = time()
+    # for _ in range(100):
+    #     cam.getFrame(False)
+    # print(time() - start)
+    # cam.close()
