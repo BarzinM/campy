@@ -88,14 +88,14 @@ class Camera(object):
     def display(self):
         while self.running:
             try:
-                f = self.getFrame()
+                f = self.get()
                 cv2.imshow('frame', f)
             except cv2.error:
                 print(f)
                 raise
             cv2.waitKey(1)
 
-    def getFrame(self, blocking=True):
+    def get(self, blocking=True):
         if blocking:
             while not self.new_frame:
                 pass
@@ -376,6 +376,6 @@ if __name__ == "__main__":
     # print("capture started")
     # start = time()
     # for _ in range(100):
-    #     cam.getFrame(False)
+    #     cam.get(False)
     # print(time() - start)
     # cam.close()
