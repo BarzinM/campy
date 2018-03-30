@@ -63,6 +63,8 @@ class Camera(object):
         while self.frame is None:
             sleep(.01)
 
+        self.shape = self.frame.shape
+
     def monitor(self, device_number=0):
         cap = cv2.VideoCapture(device_number)
 
@@ -88,20 +90,20 @@ class Camera(object):
     def display(self):
         while self.running:
             try:
-                f = self.getFrame()
+                f = self.get(blocking=False)
                 cv2.imshow('frame', f)
             except cv2.error:
                 print(f)
                 raise
             cv2.waitKey(1)
 
-    def getFrame(self, blocking=True):
+    def get(self, blocking=True):
         if blocking:
             while not self.new_frame:
                 pass
-            self.new_frame = False
         with self.frame_lock:
             return self.frame
+        self.new_frame = False
 
 
 # def writeFrame(frame, name):
@@ -376,6 +378,6 @@ if __name__ == "__main__":
     # print("capture started")
     # start = time()
     # for _ in range(100):
-    #     cam.getFrame(False)
+    #     cam.get(False)
     # print(time() - start)
     # cam.close()
