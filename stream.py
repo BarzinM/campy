@@ -6,21 +6,26 @@ import errno
 from time import sleep
 
 import cv2
-from camera import Camera
+from .camera import Camera
 
 
 class Stream(Camera):
 
     def receive(self, connection):
         self.running = True
+
         thrd = threading.Thread(target=self._receive, args=(connection,))
         thrd.daemon = True
         thrd.start()
+
         while self.frame is None:
             sleep(.01)
 
+        self.shape = self.frame.shape
+
     def send(self, connection):
         cap = self.setup()
+        self.shape = cap.read()[1].shape
 
         thrd = threading.Thread(target=self._send, args=(cap, connection))
         thrd.daemon = True
