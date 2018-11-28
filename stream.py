@@ -11,7 +11,23 @@ from .camera import Camera
 
 class Stream(Camera):
 
-    def receive(self, connection):
+    def server(self, ip, port, backlog=0):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind((self.ip, self.port))
+        self.sock.listen(backlog)
+        self.connection, address = self.sock.accept()
+
+    def client(self, ip, port):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.connect((self.ip, self.port))
+        self.connection = self.sock
+
+    def receive(self, connection=None):
+        if connection is None:
+            connection = self.connection
+
         self.running = True
 
         thrd = threading.Thread(target=self._receive, args=(connection,))
@@ -23,7 +39,10 @@ class Stream(Camera):
 
         self.shape = self.frame.shape
 
-    def send(self, connection):
+    def send(self, connection=None):
+        if connection is None:
+            connection = self.connection
+
         cap = self.setup()
         self.shape = cap.read()[1].shape
 
